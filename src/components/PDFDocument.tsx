@@ -76,6 +76,7 @@ interface PDFDocumentProps {
     iban: string
     contactNumber: string
     accountHolderName: string
+    currency: string
   }
 }
 
@@ -110,7 +111,7 @@ export const PDFDocument = ({ invoiceData }: PDFDocumentProps) => {
           <View style={styles.tableRow}>
             <Text style={styles.col1}>1.</Text>
             <Text style={styles.col2}>Hours worked - {invoiceData.hours} Hours</Text>
-            <Text style={styles.col3}>{amount.toLocaleString()} PKR</Text>
+            <Text style={styles.col3}>{amount.toLocaleString()} {}</Text>
           </View>
         </View>
 
@@ -118,7 +119,7 @@ export const PDFDocument = ({ invoiceData }: PDFDocumentProps) => {
           <View style={styles.tableRow}>
             <Text style={styles.col1}></Text>
             <Text style={styles.col2}>Total</Text>
-            <Text style={styles.col3}>{amount.toLocaleString()} PKR</Text>
+            <Text style={styles.col3}>{amount.toLocaleString()} {invoiceData.currency}</Text>
           </View>
         </View>
 

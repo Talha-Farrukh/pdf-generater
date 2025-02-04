@@ -1,19 +1,24 @@
 "use client";
 import { useState } from "react";
 import { PDFViewer, PDFDownloadLink } from "@react-pdf/renderer";
-import { InvoiceForm } from "../components/InvoiceForm";
+import { InvoiceForm, InvoiceFormData } from "../components/InvoiceForm";
 import { PDFDocument } from "../components/PDFDocument";
 import { Button } from "../components/ui/button";
-import { InvoiceFormData } from "../components/InvoiceForm";
 
 export default function Home() {
   const [invoiceData, setInvoiceData] = useState<any>(null);
   const [showPreview, setShowPreview] = useState(false);
 
   const handleSubmit = (data: InvoiceFormData) => {
+    localStorage.setItem("invoiceFormData", JSON.stringify(data));
     setInvoiceData(data);
     setShowPreview(true);
   };
+
+  // const handleReset = () => {
+  //   setInvoiceData(null)
+  //   setShowPreview(false)
+  // }
 
   if (showPreview && invoiceData) {
     return (
@@ -44,7 +49,7 @@ export default function Home() {
 
   return (
     <div className="container mx-auto p-4 max-w-2xl">
-      <h1 className="text-2xl font-bold mb-6">Invoice Generator</h1>
+      {/* <h1 className="text-2xl font-bold mb-6">Invoice Generator</h1> */}
       <InvoiceForm onSubmit={handleSubmit} />
     </div>
   );
