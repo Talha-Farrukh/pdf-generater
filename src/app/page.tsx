@@ -1,12 +1,13 @@
 "use client";
 import { useState } from "react";
-import { PDFViewer, PDFDownloadLink } from "@react-pdf/renderer";
-import { InvoiceForm, InvoiceFormData } from "../components/InvoiceForm";
+import { PDFViewer, PDFDownloadLink, BlobProvider } from "@react-pdf/renderer";
+import { InvoiceForm } from "../components/InvoiceForm";
+import { InvoiceFormData } from "../hooks/useInvoiceForm";
 import { PDFDocument } from "../components/PDFDocument";
 import { Button } from "../components/ui/button";
 
 export default function Home() {
-  const [invoiceData, setInvoiceData] = useState<any>(null);
+  const [invoiceData, setInvoiceData] = useState<InvoiceFormData | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
   const handleSubmit = (data: InvoiceFormData) => {
@@ -25,18 +26,21 @@ export default function Home() {
       <div className="container mx-auto p-4">
         <div className="flex justify-between items-center mb-4">
           <Button onClick={() => setShowPreview(false)}>Back to Form</Button>
-          <PDFDownloadLink
-            document={<PDFDocument invoiceData={invoiceData} />}
-            fileName={`invoice-${invoiceData.invoiceNumber}.pdf`}
-          >
-            <>
-              {({ loading }: any) => (
-                <Button disabled={loading}>
-                  {loading ? "Preparing..." : "Download PDF"}
-                </Button>
-              )}
-            </>
-          </PDFDownloadLink>
+          <BlobProvider document={<PDFDocument invoiceData={invoiceData} />}>
+            {({ loading }) => (
+              <Button
+                disabled={loading}
+                onClick={() => {
+                  const link = document.createElement("a");
+                  link.href = URL.createObjectURL(new Blob([]));
+                  link.download = `invoice-${invoiceData.invoiceNumber}.pdf`;
+                  link.click();
+                }}
+              >
+                {loading ? "Preparing..." : "Download PDF"}
+              </Button>
+            )}
+          </BlobProvider>
         </div>
         <div className="w-full h-[calc(100vh-100px)]">
           <PDFViewer className="w-full h-full">
