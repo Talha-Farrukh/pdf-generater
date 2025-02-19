@@ -16,8 +16,8 @@ interface InvoiceFormProps {
   onSubmit: (data: InvoiceFormData) => void;
 }
 
-export function InvoiceForm({ onSubmit }: InvoiceFormProps) {
-  const { form, handleSubmit, handleReset } = useInvoiceForm(onSubmit);
+export function InvoiceForm() {
+  const { form, handleSubmit, handleReset } = useInvoiceForm();
 
   return (
     <Card className="w-full max-w-2xl mx-auto">

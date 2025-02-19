@@ -10,12 +10,6 @@ export default function Home() {
   const [invoiceData, setInvoiceData] = useState<InvoiceFormData | null>(null);
   const [showPreview, setShowPreview] = useState(false);
 
-  const handleSubmit = (data: InvoiceFormData) => {
-    localStorage.setItem("invoiceFormData", JSON.stringify(data));
-    setInvoiceData(data);
-    setShowPreview(true);
-  };
-
   // const handleReset = () => {
   //   setInvoiceData(null)
   //   setShowPreview(false)
@@ -54,7 +48,7 @@ export default function Home() {
   return (
     <div className="container mx-auto p-4 max-w-2xl">
       {/* <h1 className="text-2xl font-bold mb-6">Invoice Generator</h1> */}
-      <InvoiceForm onSubmit={handleSubmit} />
+      <InvoiceForm />
     </div>
   );
 }

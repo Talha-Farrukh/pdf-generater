@@ -4,6 +4,7 @@ import * as z from "zod";
 import { useEffect } from "react";
 import { createInvoice } from "../app/actions";
 import { toast } from "sonner";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const formSchema = z.object({
   invoiceNumber: z.string().min(1, "Invoice number is required"),
@@ -27,7 +28,10 @@ const formSchema = z.object({
 
 export type InvoiceFormData = z.infer<typeof formSchema>;
 
-export const useInvoiceForm = (onSubmit: (data: InvoiceFormData) => void) => {
+export const useInvoiceForm = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const form = useForm<InvoiceFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -37,6 +41,36 @@ export const useInvoiceForm = (onSubmit: (data: InvoiceFormData) => void) => {
   });
 
   useEffect(() => {
+    // First check for search params
+    if (searchParams.size > 0) {
+      const formData: Partial<InvoiceFormData> = {
+        invoiceNumber: searchParams.get("invoiceNumber") || "",
+        billTo: searchParams.get("billTo") || "",
+        address: searchParams.get("address") || "",
+        currency: searchParams.get("currency") || "PKR",
+        hours: Number(searchParams.get("hours")) || 0,
+        ratePerHour: Number(searchParams.get("ratePerHour")) || 0,
+        bankName: searchParams.get("bankName") || "",
+        accountNumber: searchParams.get("accountNumber") || "",
+        iban: searchParams.get("iban") || "",
+        accountHolderName: searchParams.get("accountHolderName") || "",
+        contactNumber: searchParams.get("contactNumber") || "",
+        email: searchParams.get("email") || "",
+        cnicNumber: searchParams.get("cnicNumber") || "",
+      };
+
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value) {
+          form.setValue(key as keyof InvoiceFormData, value);
+        }
+      });
+
+      // Clear the search params after setting the values
+      router.replace("/");
+      return;
+    }
+
+    // If no search params, try to load from localStorage
     const savedData = localStorage.getItem("invoiceFormData");
     if (savedData) {
       try {
@@ -53,7 +87,7 @@ export const useInvoiceForm = (onSubmit: (data: InvoiceFormData) => void) => {
         localStorage.removeItem("invoiceFormData");
       }
     }
-  }, [form]);
+  }, [form, searchParams, router]);
 
   const handleSubmit = async (formData: InvoiceFormData) => {
     try {
@@ -74,10 +108,9 @@ export const useInvoiceForm = (onSubmit: (data: InvoiceFormData) => void) => {
       localStorage.setItem("invoiceFormData", JSON.stringify(storageData));
 
       // Show success message
-      toast.success("Invoice saved successfully");
+      toast.success("Invoice generated successfully");
 
-      // Call the onSubmit callback
-      onSubmit(formData);
+      router.push(`/${result.invoiceId}`);
     } catch (error) {
       console.error("Failed to save invoice:", error);
       throw error;

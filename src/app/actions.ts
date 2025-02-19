@@ -3,27 +3,33 @@
 import { db } from "../lib/db";
 import { invoices } from "../lib/db/schema/invoice";
 import { InvoiceFormData } from "../hooks/useInvoiceForm";
+import { eq } from "drizzle-orm";
 
 export async function createInvoice(formData: InvoiceFormData) {
   try {
-    await db.insert(invoices).values({
-      invoiceNumber: formData.invoiceNumber,
-      date: formData.date,
-      billTo: formData.billTo,
-      address: formData.address,
-      currency: formData.currency,
-      hours: formData.hours.toString(),
-      ratePerHour: formData.ratePerHour.toString(),
-      bankName: formData.bankName,
-      accountNumber: formData.accountNumber,
-      iban: formData.iban,
-      accountHolderName: formData.accountHolderName,
-      contactNumber: formData.contactNumber,
-      email: formData.email,
-      cnicNumber: formData.cnicNumber,
-    });
+    const result = await db
+      .insert(invoices)
+      .values({
+        invoiceNumber: formData.invoiceNumber,
+        date: formData.date,
+        billTo: formData.billTo,
+        address: formData.address,
+        currency: formData.currency,
+        hours: formData.hours.toString(),
+        ratePerHour: formData.ratePerHour.toString(),
+        bankName: formData.bankName,
+        accountNumber: formData.accountNumber,
+        iban: formData.iban,
+        accountHolderName: formData.accountHolderName,
+        contactNumber: formData.contactNumber,
+        email: formData.email,
+        cnicNumber: formData.cnicNumber,
+      })
+      .returning({ id: invoices.id })
+      .then((res) => res[0]);
 
     return {
+      invoiceId: result.id,
       success: true as const,
     };
   } catch (error) {
@@ -33,4 +39,19 @@ export async function createInvoice(formData: InvoiceFormData) {
       error: error instanceof Error ? error.message : "Failed to save invoice",
     };
   }
+}
+
+export async function getInvoice(invoiceId: string) {
+  const invoice = await db
+    .select()
+    .from(invoices)
+    .where(eq(invoices.id, invoiceId))
+    .limit(1)
+    .then((res) => res[0]);
+  return invoice;
+}
+
+export async function getInvoices() {
+  const result = await db.select().from(invoices);
+  return result;
 }

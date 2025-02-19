@@ -91,7 +91,7 @@ export const DateFormField = ({ control, name, label }: FormFieldProps) => (
     control={control}
     name={name}
     render={({ field }) => (
-      <FormItem className="flex flex-col">
+      <FormItem>
         <FormLabel>{label}</FormLabel>
         <Popover>
           <PopoverTrigger asChild>
