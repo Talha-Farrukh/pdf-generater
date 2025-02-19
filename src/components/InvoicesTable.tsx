@@ -47,6 +47,8 @@ export function InvoicesTable({ invoices }: InvoicesTableProps) {
       contactNumber: invoice.contactNumber,
       email: invoice.email,
       cnicNumber: invoice.cnicNumber,
+      branchName: invoice.branchName,
+      branchAddress: invoice.branchAddress,
     });
 
     router.push(`/?${searchParams.toString()}`);

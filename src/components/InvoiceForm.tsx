@@ -10,11 +10,7 @@ import {
   DateFormField,
   CurrencyFormField,
 } from "./form/FormFields";
-import { useInvoiceForm, InvoiceFormData } from "../hooks/useInvoiceForm";
-
-interface InvoiceFormProps {
-  onSubmit: (data: InvoiceFormData) => void;
-}
+import { useInvoiceForm } from "../hooks/useInvoiceForm";
 
 export function InvoiceForm() {
   const { form, handleSubmit, handleReset } = useInvoiceForm();
@@ -105,6 +101,20 @@ export function InvoiceForm() {
                 name="iban"
                 label="IBAN"
                 placeholder="IBAN"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <TextFormField
+                control={form.control}
+                name="branchName"
+                label="Branch Name"
+                placeholder="Branch Name"
+              />
+              <TextFormField
+                control={form.control}
+                name="branchAddress"
+                label="Branch Address"
+                placeholder="Branch Address"
               />
             </div>
 

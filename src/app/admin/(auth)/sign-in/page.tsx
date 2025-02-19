@@ -113,16 +113,6 @@ export default function SignInPage() {
             </Button>
           </form>
         </Form>
-
-        <p className="px-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
-          Don&apos;t have an account?{" "}
-          <Link
-            href="/admin/sign-up"
-            className="hover:text-brand underline underline-offset-4"
-          >
-            Sign up
-          </Link>
-        </p>
       </div>
     </div>
   );

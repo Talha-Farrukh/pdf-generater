@@ -14,6 +14,11 @@ export const auth = betterAuth({
       verification: verification,
     },
   }),
+  user: {
+    deleteUser: {
+      enabled: true,
+    },
+  },
   emailAndPassword: {
     enabled: true,
     autoSignIn: false,

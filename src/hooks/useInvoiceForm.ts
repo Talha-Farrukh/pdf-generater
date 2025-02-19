@@ -1,3 +1,5 @@
+"use client";
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -20,6 +22,8 @@ const formSchema = z.object({
   accountHolderName: z.string().min(1, "Account holder name is required"),
   contactNumber: z.string().min(1, "Contact number is required"),
   email: z.string().email("Invalid email address"),
+  branchName: z.string().optional().nullable(),
+  branchAddress: z.string().optional().nullable(),
   cnicNumber: z
     .string()
     .min(13, "CNIC number must be 13 digits")
@@ -44,6 +48,8 @@ export const useInvoiceForm = () => {
     // First check for search params
     if (searchParams.size > 0) {
       const formData: Partial<InvoiceFormData> = {
+        branchName: searchParams.get("branchName") || "",
+        branchAddress: searchParams.get("branchAddress") || "",
         invoiceNumber: searchParams.get("invoiceNumber") || "",
         billTo: searchParams.get("billTo") || "",
         address: searchParams.get("address") || "",

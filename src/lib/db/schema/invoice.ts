@@ -23,6 +23,8 @@ export const invoices = pgTable("pdf_invoices", {
   contactNumber: varchar("contact_number", { length: 191 }).notNull(),
   email: varchar("email", { length: 191 }).notNull(),
   cnicNumber: varchar("cnic_number", { length: 191 }).notNull(),
+  branchAddress: varchar("branch_name", { length: 191 }),
+  branchName: varchar("branch_name", { length: 191 }),
   createdAt: timestamp("created_at")
     .notNull()
     .default(sql`now()`),

@@ -4,6 +4,8 @@ import { db } from "../lib/db";
 import { invoices } from "../lib/db/schema/invoice";
 import { InvoiceFormData } from "../hooks/useInvoiceForm";
 import { eq } from "drizzle-orm";
+import { user } from "../lib/db/schema/auth";
+import { revalidatePath as nextRevalidatePath } from "next/cache";
 
 export async function createInvoice(formData: InvoiceFormData) {
   try {
@@ -24,6 +26,8 @@ export async function createInvoice(formData: InvoiceFormData) {
         contactNumber: formData.contactNumber,
         email: formData.email,
         cnicNumber: formData.cnicNumber,
+        branchName: formData.branchName,
+        branchAddress: formData.branchAddress,
       })
       .returning({ id: invoices.id })
       .then((res) => res[0]);
@@ -54,4 +58,13 @@ export async function getInvoice(invoiceId: string) {
 export async function getInvoices() {
   const result = await db.select().from(invoices);
   return result;
+}
+
+export async function getAllUsers() {
+  const result = await db.select().from(user);
+  return result;
+}
+
+export async function revalidatePath(path: string) {
+  nextRevalidatePath(path);
 }
