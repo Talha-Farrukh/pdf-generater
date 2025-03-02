@@ -28,8 +28,6 @@ export default function PDFRenderer({ invoice }: { invoice: InvoiceFormData }) {
               invoiceData={{
                 ...invoice,
                 date: new Date(invoice.date),
-                hours: invoice.hours,
-                ratePerHour: invoice.ratePerHour,
               }}
             />
           }
@@ -58,8 +56,6 @@ export default function PDFRenderer({ invoice }: { invoice: InvoiceFormData }) {
             invoiceData={{
               ...invoice,
               date: new Date(invoice.date),
-              hours: invoice.hours,
-              ratePerHour: invoice.ratePerHour,
             }}
           />
         </PDFViewer>

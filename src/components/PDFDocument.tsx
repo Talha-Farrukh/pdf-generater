@@ -86,7 +86,33 @@ interface PDFDocumentProps {
 }
 
 export const PDFDocument = ({ invoiceData }: PDFDocumentProps) => {
-  const amount = invoiceData.hours * invoiceData.ratePerHour;
+  // Ensure projects is an array
+  const projects = Array.isArray(invoiceData.projects)
+    ? invoiceData.projects
+    : [];
+
+  // Calculate total amount from all projects with careful type checking
+  const totalAmount = projects.reduce((sum, project) => {
+    // Ensure hours and ratePerHour are numbers
+    const hours =
+      typeof project.hours === "number"
+        ? project.hours
+        : project.hours
+        ? parseFloat(String(project.hours))
+        : 0;
+
+    const rate =
+      typeof project.ratePerHour === "number"
+        ? project.ratePerHour
+        : project.ratePerHour
+        ? parseFloat(String(project.ratePerHour))
+        : 0;
+
+    // Calculate amount for this project
+    const projectAmount = isNaN(hours) || isNaN(rate) ? 0 : hours * rate;
+
+    return sum + projectAmount;
+  }, 0);
 
   return (
     <Document>
@@ -100,42 +126,46 @@ export const PDFDocument = ({ invoiceData }: PDFDocumentProps) => {
           <Text style={styles.sectionTitle}>Invoice Details</Text>
           <View style={styles.row}>
             <Text style={styles.label}>Invoice Number:</Text>
-            <Text style={styles.value}>{invoiceData.invoiceNumber}</Text>
+            <Text style={styles.value}>{invoiceData.invoiceNumber || ""}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Date:</Text>
             <Text style={styles.value}>
-              {format(invoiceData.date, "do MMM yyyy")}
+              {invoiceData.date
+                ? format(new Date(invoiceData.date), "do MMM yyyy")
+                : ""}
             </Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Bill to:</Text>
-            <Text style={styles.value}>{invoiceData.billTo}</Text>
+            <Text style={styles.value}>{invoiceData.billTo || ""}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Address:</Text>
+            <Text style={styles.value}>{invoiceData.address || ""}</Text>
           </View>
         </View>
 
-        {/* Client Information Section */}
+        {/* Personal Information Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Personal Information</Text>
           <View style={styles.row}>
             <Text style={styles.label}>Full Name:</Text>
-            <Text style={styles.value}>{invoiceData.accountHolderName}</Text>
+            <Text style={styles.value}>
+              {invoiceData.accountHolderName || ""}
+            </Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Email:</Text>
-            <Text style={styles.value}>{invoiceData.email}</Text>
+            <Text style={styles.value}>{invoiceData.email || ""}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>CNIC Number:</Text>
-            <Text style={styles.value}>{invoiceData.cnicNumber}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Address:</Text>
-            <Text style={styles.value}>{invoiceData.address}</Text>
+            <Text style={styles.value}>{invoiceData.cnicNumber || ""}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Contact Number:</Text>
-            <Text style={styles.value}>{invoiceData.contactNumber}</Text>
+            <Text style={styles.value}>{invoiceData.contactNumber || ""}</Text>
           </View>
         </View>
 
@@ -148,23 +178,48 @@ export const PDFDocument = ({ invoiceData }: PDFDocumentProps) => {
               <Text style={styles.col2}>Description</Text>
               <Text style={styles.col3}>Amount</Text>
             </View>
-            <View style={styles.tableRow}>
-              <Text style={styles.col1}>1.</Text>
-              <Text style={styles.col2}>
-                Hours worked - {invoiceData.hours} Hours
-              </Text>
-              <Text style={styles.col3}>
-                {amount.toLocaleString()} {invoiceData.currency}
-              </Text>
-            </View>
-          </View>
 
-          <View style={styles.total}>
-            <View style={styles.tableRow}>
+            {projects.map((project, index) => {
+              // Ensure hours and ratePerHour are numbers
+              const hours =
+                typeof project.hours === "number"
+                  ? project.hours
+                  : project.hours
+                  ? parseFloat(String(project.hours))
+                  : 0;
+
+              const rate =
+                typeof project.ratePerHour === "number"
+                  ? project.ratePerHour
+                  : project.ratePerHour
+                  ? parseFloat(String(project.ratePerHour))
+                  : 0;
+
+              // Calculate amount for this project
+              const amount = isNaN(hours) || isNaN(rate) ? 0 : hours * rate;
+
+              return (
+                <View key={index} style={styles.tableRow}>
+                  <Text style={styles.col1}>{index + 1}.</Text>
+                  <Text style={styles.col2}>
+                    {project.description || "Service"} -{" "}
+                    {isNaN(hours) ? 0 : hours} Hours @ {isNaN(rate) ? 0 : rate}{" "}
+                    {invoiceData.currency || "PKR"}/hr
+                  </Text>
+                  <Text style={styles.col3}>
+                    {isNaN(amount) ? "0" : amount.toLocaleString()}{" "}
+                    {invoiceData.currency || "PKR"}
+                  </Text>
+                </View>
+              );
+            })}
+
+            <View style={[styles.tableRow, styles.total]}>
               <Text style={styles.col1}></Text>
               <Text style={styles.col2}>Total</Text>
               <Text style={styles.col3}>
-                {amount.toLocaleString()} {invoiceData.currency}
+                {isNaN(totalAmount) ? "0" : totalAmount.toLocaleString()}{" "}
+                {invoiceData.currency || "PKR"}
               </Text>
             </View>
           </View>
@@ -177,26 +232,40 @@ export const PDFDocument = ({ invoiceData }: PDFDocumentProps) => {
           <Text style={styles.sectionTitle}>Payment Information</Text>
           <View style={styles.row}>
             <Text style={styles.label}>Account Holder:</Text>
-            <Text style={styles.value}>{invoiceData.accountHolderName}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Bank Name:</Text>
-            <Text style={styles.value}>{invoiceData.bankName}</Text>
+            <Text style={styles.value}>
+              {invoiceData.accountHolderName || ""}
+            </Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>Account Number:</Text>
-            <Text style={styles.value}>{invoiceData.accountNumber}</Text>
+            <Text style={styles.value}>{invoiceData.accountNumber || ""}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.label}>IBAN:</Text>
-            <Text style={styles.value}>{invoiceData.iban}</Text>
+            <Text style={styles.value}>{invoiceData.iban || ""}</Text>
           </View>
+          <View style={styles.row}>
+            <Text style={styles.label}>Bank Name:</Text>
+            <Text style={styles.value}>{invoiceData.bankName || ""}</Text>
+          </View>
+          {invoiceData.branchName && (
+            <View style={styles.row}>
+              <Text style={styles.label}>Branch Name:</Text>
+              <Text style={styles.value}>{invoiceData.branchName}</Text>
+            </View>
+          )}
+          {invoiceData.branchAddress && (
+            <View style={styles.row}>
+              <Text style={styles.label}>Branch Address:</Text>
+              <Text style={styles.value}>{invoiceData.branchAddress}</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.footer}>
           <Text>
             If you have any questions about this invoice, please contact at{" "}
-            {invoiceData.contactNumber}
+            {invoiceData.contactNumber || ""}
           </Text>
         </View>
       </Page>
