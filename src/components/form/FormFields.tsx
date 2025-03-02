@@ -26,7 +26,7 @@ import { InvoiceFormData } from "../../hooks/useInvoiceForm";
 
 interface FormFieldProps {
   control: Control<InvoiceFormData>;
-  name: keyof InvoiceFormData;
+  name: any; // Changed from keyof InvoiceFormData to any to support nested paths
   label: string;
   placeholder?: string;
 }
@@ -73,11 +73,12 @@ export const NumberFormField = ({
             type="number"
             step="0.01"
             placeholder={placeholder}
-            {...field}
-            value={field.value as number}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              field.onChange(e.target.value ? Number(e.target.value) : 0)
-            }
+            value={field.value === 0 ? "" : field.value}
+            onChange={(e) => {
+              // Convert the string value to a number
+              const value = e.target.value === "" ? 0 : parseFloat(e.target.value);
+              field.onChange(value);
+            }}
           />
         </FormControl>
         <FormMessage />

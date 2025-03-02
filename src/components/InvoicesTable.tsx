@@ -14,32 +14,46 @@ import { Button } from "./ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+interface Project {
+  description: string;
+  hours: number;
+  ratePerHour: number;
+}
+
 interface Invoice {
   id: string;
   invoiceNumber: string;
   date: Date;
   billTo: string;
   email: string;
-  amount: string;
   currency: string;
-  status: string;
+  projects: Project[];
+  branchName?: string | null;
+  branchAddress?: string | null;
+  address: string;
+  bankName: string;
+  accountNumber: string;
+  iban: string;
+  accountHolderName: string;
+  contactNumber: string;
+  cnicNumber: string;
 }
 
 interface InvoicesTableProps {
-  invoices: any[];
+  invoices: Invoice[];
 }
 
 export function InvoicesTable({ invoices }: InvoicesTableProps) {
   const router = useRouter();
 
-  const handleCopy = (invoice: any) => {
-    const searchParams = new URLSearchParams({
+  const handleCopy = (invoice: Invoice) => {
+    const params = new URLSearchParams({
+      branchName: invoice.branchName || "",
+      branchAddress: invoice.branchAddress || "",
       invoiceNumber: invoice.invoiceNumber,
       billTo: invoice.billTo,
       address: invoice.address,
       currency: invoice.currency,
-      hours: invoice.hours,
-      ratePerHour: invoice.ratePerHour,
       bankName: invoice.bankName,
       accountNumber: invoice.accountNumber,
       iban: invoice.iban,
@@ -47,11 +61,20 @@ export function InvoicesTable({ invoices }: InvoicesTableProps) {
       contactNumber: invoice.contactNumber,
       email: invoice.email,
       cnicNumber: invoice.cnicNumber,
-      branchName: invoice.branchName,
-      branchAddress: invoice.branchAddress,
+      projects: JSON.stringify(invoice.projects),
     });
 
-    router.push(`/?${searchParams.toString()}`);
+    router.push(`/?${params.toString()}`);
+  };
+
+  // Calculate total amount from all projects
+  const calculateTotalAmount = (projects: Project[]) => {
+    if (!Array.isArray(projects)) return 0;
+    return projects.reduce((sum, project) => {
+      const hours = typeof project.hours === 'number' ? project.hours : parseFloat(project.hours as any);
+      const rate = typeof project.ratePerHour === 'number' ? project.ratePerHour : parseFloat(project.ratePerHour as any);
+      return sum + (hours * rate);
+    }, 0);
   };
 
   return (
@@ -61,27 +84,28 @@ export function InvoicesTable({ invoices }: InvoicesTableProps) {
           <TableRow>
             <TableHead>Invoice #</TableHead>
             <TableHead>Date</TableHead>
-            <TableHead>Bill To</TableHead>
-            <TableHead>Email</TableHead>
+            <TableHead>Client</TableHead>
             <TableHead>Amount</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {invoices.map((invoice) => {
-            const amount = Number(invoice.hours) * Number(invoice.ratePerHour);
+            const totalAmount = calculateTotalAmount(invoice.projects);
+            
             return (
               <TableRow key={invoice.id}>
-                <TableCell>{invoice.invoiceNumber}</TableCell>
+                <TableCell className="font-medium">
+                  {invoice.invoiceNumber}
+                </TableCell>
                 <TableCell>
                   {format(new Date(invoice.date), "MMM dd, yyyy")}
                 </TableCell>
                 <TableCell>{invoice.billTo}</TableCell>
-                <TableCell>{invoice.email}</TableCell>
                 <TableCell>
-                  {amount.toLocaleString()} {invoice.currency}
+                  {totalAmount.toLocaleString()} {invoice.currency}
                 </TableCell>
-                <TableCell className="flex justify-end gap-2">
+                <TableCell className="text-right space-x-1">
                   <Button
                     variant="ghost"
                     size="icon"

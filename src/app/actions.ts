@@ -9,6 +9,15 @@ import { revalidatePath as nextRevalidatePath } from "next/cache";
 
 export async function createInvoice(formData: InvoiceFormData) {
   try {
+    // Ensure projects is properly formatted
+    const projectsData = Array.isArray(formData.projects) 
+      ? formData.projects.map(project => ({
+          description: project.description,
+          hours: typeof project.hours === 'number' ? project.hours : parseFloat(project.hours as any),
+          ratePerHour: typeof project.ratePerHour === 'number' ? project.ratePerHour : parseFloat(project.ratePerHour as any)
+        }))
+      : [];
+
     const result = await db
       .insert(invoices)
       .values({
@@ -17,8 +26,7 @@ export async function createInvoice(formData: InvoiceFormData) {
         billTo: formData.billTo,
         address: formData.address,
         currency: formData.currency,
-        hours: formData.hours.toString(),
-        ratePerHour: formData.ratePerHour.toString(),
+        projects: projectsData,
         bankName: formData.bankName,
         accountNumber: formData.accountNumber,
         iban: formData.iban,
@@ -26,21 +34,20 @@ export async function createInvoice(formData: InvoiceFormData) {
         contactNumber: formData.contactNumber,
         email: formData.email,
         cnicNumber: formData.cnicNumber,
-        branchName: formData.branchName,
-        branchAddress: formData.branchAddress,
+        branchName: formData.branchName || null,
+        branchAddress: formData.branchAddress || null,
       })
-      .returning({ id: invoices.id })
-      .then((res) => res[0]);
+      .returning({ id: invoices.id });
 
     return {
-      invoiceId: result.id,
-      success: true as const,
+      success: true,
+      id: result[0].id,
     };
   } catch (error) {
     console.error("Failed to save invoice:", error);
     return {
-      success: false as const,
-      error: error instanceof Error ? error.message : "Failed to save invoice",
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 }

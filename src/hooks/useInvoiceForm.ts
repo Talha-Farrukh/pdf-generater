@@ -3,10 +3,20 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createInvoice } from "../app/actions";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
+
+// Define the project schema
+const projectSchema = z.object({
+  id: z.string().optional(),
+  description: z.string().min(1, "Project description is required"),
+  hours: z.number().min(0, "Hours must be greater than or equal to 0"),
+  ratePerHour: z.number().min(0, "Rate must be greater than or equal to 0"),
+});
+
+export type ProjectData = z.infer<typeof projectSchema>;
 
 const formSchema = z.object({
   invoiceNumber: z.string().min(1, "Invoice number is required"),
@@ -14,8 +24,8 @@ const formSchema = z.object({
   billTo: z.string().min(1, "Bill to is required"),
   address: z.string().min(1, "Address is required"),
   currency: z.string().min(1, "Currency is required"),
-  hours: z.number().min(0, "Hours must be greater than or equal to 0"),
-  ratePerHour: z.number().min(0, "Rate must be greater than or equal to 0"),
+  // Replace hours and ratePerHour with projects array
+  projects: z.array(projectSchema).min(1, "At least one project is required"),
   bankName: z.string().min(1, "Bank name is required"),
   accountNumber: z.string().min(1, "Account number is required"),
   iban: z.string().min(1, "IBAN is required"),
@@ -35,12 +45,33 @@ export type InvoiceFormData = z.infer<typeof formSchema>;
 export const useInvoiceForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<InvoiceFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      invoiceNumber: "",
       date: new Date(),
+      billTo: "",
+      address: "",
       currency: "PKR",
+      projects: [
+        {
+          id: crypto.randomUUID(),
+          description: "",
+          hours: 0,
+          ratePerHour: 0,
+        },
+      ],
+      bankName: "",
+      accountNumber: "",
+      iban: "",
+      accountHolderName: "",
+      contactNumber: "",
+      email: "",
+      cnicNumber: "",
+      branchName: "",
+      branchAddress: "",
     },
   });
 
@@ -54,8 +85,6 @@ export const useInvoiceForm = () => {
         billTo: searchParams.get("billTo") || "",
         address: searchParams.get("address") || "",
         currency: searchParams.get("currency") || "PKR",
-        hours: Number(searchParams.get("hours")) || 0,
-        ratePerHour: Number(searchParams.get("ratePerHour")) || 0,
         bankName: searchParams.get("bankName") || "",
         accountNumber: searchParams.get("accountNumber") || "",
         iban: searchParams.get("iban") || "",
@@ -65,75 +94,152 @@ export const useInvoiceForm = () => {
         cnicNumber: searchParams.get("cnicNumber") || "",
       };
 
-      Object.entries(formData).forEach(([key, value]) => {
-        if (value) {
-          form.setValue(key as keyof InvoiceFormData, value);
+      // Try to parse projects from search params
+      try {
+        const projectsParam = searchParams.get("projects");
+        if (projectsParam) {
+          const parsedProjects = JSON.parse(projectsParam);
+          if (Array.isArray(parsedProjects)) {
+            // Ensure each project has an id
+            const projectsWithIds = parsedProjects.map(project => ({
+              ...project,
+              id: project.id || crypto.randomUUID(),
+              // Ensure numeric values
+              hours: typeof project.hours === 'number' ? project.hours : parseFloat(project.hours),
+              ratePerHour: typeof project.ratePerHour === 'number' ? project.ratePerHour : parseFloat(project.ratePerHour)
+            }));
+            formData.projects = projectsWithIds;
+          }
+        }
+      } catch (error) {
+        console.error("Failed to parse projects from URL:", error);
+      }
+
+      // Set form values from URL params
+      Object.keys(formData).forEach((key) => {
+        if (formData[key as keyof InvoiceFormData] !== undefined) {
+          form.setValue(key as keyof InvoiceFormData, formData[key as keyof InvoiceFormData]!);
         }
       });
 
-      // Clear the search params after setting the values
-      router.replace("/");
-      return;
-    }
-
-    // If no search params, try to load from localStorage
-    const savedData = localStorage.getItem("invoiceFormData");
-    if (savedData) {
-      try {
-        const parsedData = JSON.parse(savedData);
-        Object.keys(parsedData).forEach((key) => {
-          if (key === "date") {
-            form.setValue(key, new Date(parsedData[key]));
-          } else {
-            form.setValue(key as keyof InvoiceFormData, parsedData[key]);
+      // Set date separately
+      const dateParam = searchParams.get("date");
+      if (dateParam) {
+        try {
+          form.setValue("date", new Date(dateParam));
+        } catch (error) {
+          console.error("Failed to parse date:", error);
+        }
+      }
+    } else {
+      // Check for saved form data in localStorage
+      const savedData = localStorage.getItem("invoiceFormData");
+      if (savedData) {
+        try {
+          const parsedData = JSON.parse(savedData);
+          // Convert date string back to Date object
+          if (parsedData.date) {
+            parsedData.date = new Date(parsedData.date);
           }
-        });
-      } catch (error) {
-        console.error("Failed to parse saved form data:", error);
-        localStorage.removeItem("invoiceFormData");
+          // Set form values from localStorage
+          Object.keys(parsedData).forEach((key) => {
+            form.setValue(key as keyof InvoiceFormData, parsedData[key]);
+          });
+        } catch (error) {
+          console.error("Failed to parse saved form data:", error);
+          localStorage.removeItem("invoiceFormData");
+        }
       }
     }
   }, [form, searchParams, router]);
 
-  const handleSubmit = async (formData: InvoiceFormData) => {
+  // This is the key fix - define the submit handler properly
+  const onSubmit = async (data: InvoiceFormData) => {
     try {
-      // Save to database using server action
-      const result = await createInvoice(formData);
-
-      if (!result.success) {
-        const errorMessage = result.error || "Failed to save invoice";
-        toast.error(errorMessage);
-        throw new Error(errorMessage);
-      }
-
-      // Save to localStorage with serialized date
+      setIsSubmitting(true);
+      
+      // Save form data to localStorage for persistence
       const storageData = {
-        ...formData,
-        date: formData.date.toISOString(),
+        ...data,
+        date: data.date.toISOString(),
       };
       localStorage.setItem("invoiceFormData", JSON.stringify(storageData));
-
-      // Show success message
-      toast.success("Invoice generated successfully");
-
-      router.push(`/${result.invoiceId}`);
+      
+      // Send data to server
+      const result = await createInvoice(data);
+      
+      if (result.success) {
+        toast.success("Invoice generated successfully!");
+        router.push(`/${result.id}`);
+      } else {
+        toast.error(`Failed to save invoice: ${result.error}`);
+      }
     } catch (error) {
-      console.error("Failed to save invoice:", error);
-      throw error;
+      toast.error(`An error occurred: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleReset = () => {
     form.reset({
+      invoiceNumber: "",
       date: new Date(),
+      billTo: "",
+      address: "",
       currency: "PKR",
+      projects: [
+        {
+          id: crypto.randomUUID(),
+          description: "",
+          hours: 0,
+          ratePerHour: 0,
+        },
+      ],
+      bankName: "",
+      accountNumber: "",
+      iban: "",
+      accountHolderName: "",
+      contactNumber: "",
+      email: "",
+      cnicNumber: "",
+      branchName: "",
+      branchAddress: "",
     });
     localStorage.removeItem("invoiceFormData");
   };
 
+  const addProject = () => {
+    const currentProjects = form.getValues("projects") || [];
+    form.setValue("projects", [
+      ...currentProjects,
+      {
+        id: crypto.randomUUID(),
+        description: "",
+        hours: 0,
+        ratePerHour: 0,
+      },
+    ]);
+  };
+
+  const removeProject = (index: number) => {
+    const currentProjects = form.getValues("projects");
+    if (currentProjects.length <= 1) {
+      toast.error("At least one project is required");
+      return;
+    }
+    
+    const updatedProjects = [...currentProjects];
+    updatedProjects.splice(index, 1);
+    form.setValue("projects", updatedProjects);
+  };
+
   return {
     form,
-    handleSubmit: form.handleSubmit(handleSubmit),
+    handleSubmit: onSubmit, // Return the onSubmit function directly
     handleReset,
+    addProject,
+    removeProject,
+    isSubmitting,
   };
 };

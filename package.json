@@ -13,7 +13,8 @@
     "db:pull": "drizzle-kit introspect",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:check": "drizzle-kit check"
+    "db:check": "drizzle-kit check",
+    "migrate:projects": "tsx src/lib/db/migrations/add_projects_column.ts"
   },
   "dependencies": {
     "@better-fetch/fetch": "^1.1.13",
