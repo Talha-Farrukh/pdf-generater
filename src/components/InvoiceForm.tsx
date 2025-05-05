@@ -145,8 +145,8 @@ export function InvoiceForm() {
               <TextFormField
                 control={form.control}
                 name="iban"
-                label="IBAN"
-                placeholder="IBAN"
+                label="Sort Code"
+                placeholder="Sort Code"
               />
             </div>
 

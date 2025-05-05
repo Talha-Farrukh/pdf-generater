@@ -241,7 +241,7 @@ export const PDFDocument = ({ invoiceData }: PDFDocumentProps) => {
             <Text style={styles.value}>{invoiceData.accountNumber || ""}</Text>
           </View>
           <View style={styles.row}>
-            <Text style={styles.label}>IBAN:</Text>
+            <Text style={styles.label}>Sort Code:</Text>
             <Text style={styles.value}>{invoiceData.iban || ""}</Text>
           </View>
           <View style={styles.row}>

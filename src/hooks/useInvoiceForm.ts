@@ -28,7 +28,7 @@ const formSchema = z.object({
   projects: z.array(projectSchema).min(1, "At least one project is required"),
   bankName: z.string().min(1, "Bank name is required"),
   accountNumber: z.string().min(1, "Account number is required"),
-  iban: z.string().min(1, "IBAN is required"),
+  iban: z.string().min(1, "Sort code is required"),
   accountHolderName: z.string().min(1, "Account holder name is required"),
   contactNumber: z.string().min(1, "Contact number is required"),
   email: z.string().email("Invalid email address"),
