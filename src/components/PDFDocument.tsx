@@ -202,9 +202,10 @@ export const PDFDocument = ({ invoiceData }: PDFDocumentProps) => {
                 <View key={index} style={styles.tableRow}>
                   <Text style={styles.col1}>{index + 1}.</Text>
                   <Text style={styles.col2}>
-                    {project.description || "Service"} -{" "}
+                    {project.description || "Service"} 
+                    {/* -{" "}
                     {isNaN(hours) ? 0 : hours} Hours @ {isNaN(rate) ? 0 : rate}{" "}
-                    {invoiceData.currency || "PKR"}/hr
+                    {invoiceData.currency || "PKR"}/hr */}
                   </Text>
                   <Text style={styles.col3}>
                     {isNaN(amount) ? "0" : amount.toLocaleString()}{" "}
